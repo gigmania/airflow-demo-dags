@@ -3,7 +3,7 @@ from airflow.operators.bash import BashOperator
 
 from datetime import datetime, timedelta
 
-@dag(start_date=datetime(2024, 2, 2), schedule_interval='@minute', catchup=False)
+@dag(start_date=datetime(2024, 2, 2), schedule_interval='*/5 * * * *', catchup=False)
 def test_night_dag():
 
     # Define tasks
