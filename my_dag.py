@@ -1,23 +1,46 @@
-from airflow.models.dag import DAG
-from airflow.operators.empty import EmptyOperator
-import datetime
-import pendulum
+from airflow.decorators import dag, task
+from airflow.operators.bash import BashOperator
 
-now = pendulum.now(tz="UTC")
-now_to_the_hour = (now - datetime.timedelta(0, 0, 0, 0, 0, 3)).replace(minute=0, second=0, microsecond=0)
-START_DATE = now_to_the_hour
-DAG_NAME = "test_dag_v1"
+from datetime import datetime, timedelta
 
-dag = DAG(
-    DAG_NAME,
-    schedule="*/10 * * * *",    # Fixed the cron expression
-    default_args={"depends_on_past": True},
-    start_date=pendulum.datetime(2021, 1, 1, tz="UTC"),
-    catchup=False,
-)
+@dag(start_date=datetime(2024, 2, 2), schedule_interval='@minute', catchup=False)
+def test_night_dag():
 
-run_this_1 = EmptyOperator(task_id="run_this_1", dag=dag)
-run_this_2 = EmptyOperator(task_id="run_this_2", dag=dag)
-run_this_2.set_upstream(run_this_1)
-run_this_3 = EmptyOperator(task_id="run_this_3", dag=dag)
-run_this_3.set_upstream(run_this_2)
+    # Define tasks
+    task_1 = BashOperator(task_id='brush_teeth', bash_command='echo "Brushed teeth"', retries=3, retry_delay=timedelta(minutes=5))
+    task_2 = BashOperator(task_id='eat_dinner', bash_command='echo "Ate a healthy dinner"', retries=3, retry_delay=timedelta(minutes=5))
+    task_3 = BashOperator(task_id='cocktail', bash_command='echo "Drank a cocktail"', retries=3, retry_delay=timedelta(minutes=5))
+
+    # Define Python tasks using @task decorator
+    @task
+    def read_night_news():
+        return 'Read the nighttime news headlines'
+
+    @task
+    def work_night_tasks():
+        return 'Completed important night work tasks'
+
+    @task
+    def close_eyes():
+        return 'closed my eyes and went night night'
+
+    # Define the final tasks
+    @task
+    def review_night(news, work, relaxation):
+        print(f"News: {news}")
+        print(f"Work: {work}")
+        print(f"Relaxation: {relaxation}")
+
+    # Set task dependencies
+    task_1 >> task_2 >> task_3
+    task_2 >> task_3
+
+    # Set Python task dependencies
+    news_result = read_night_news()
+    work_result = work_night_tasks()
+    relax_result = close_eyes()
+
+    # Set final task dependency
+    review_night(news_result, work_result, relax_result)
+
+test_night_dag()
