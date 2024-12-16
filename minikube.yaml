@@ -1,3 +1,0 @@
-
-#List of providers
-kubectl exec -n airflow airflow-scheduler-66469444df-7ndxg -- airflow providers list
